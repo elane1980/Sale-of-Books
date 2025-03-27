@@ -4,25 +4,56 @@ import { useState } from "react";
 const initialBooks = [
   { isbn: "9780755500413", title: "All New Minecraft Creative Handbook", price: 9.99 },
   { isbn: "9781546152293", title: "Astro Turf Journal", price: 8.99 },
-  { isbn: "HANDPOINTERS", title: "Hand Pointers", price: 3.99 },
+  { isbn: "HANDPOINTERS", title: "Hand Pointers", price: 3.99 }
 ];
 
 export default function App() {
-  const [books] = useState(initialBooks);
+  const [books, setBooks] = useState(initialBooks);
   const [cart, setCart] = useState([]);
+  const [sales, setSales] = useState([]);
   const [selectedIsbn, setSelectedIsbn] = useState(books[0].isbn);
   const [quantity, setQuantity] = useState(1);
+  const [customTitle, setCustomTitle] = useState("");
+  const [customPrice, setCustomPrice] = useState("");
+  const [stationeryPrice, setStationeryPrice] = useState("");
   const [cashReceived, setCashReceived] = useState(0);
-  const [sales, setSales] = useState([]);
+  const [discountUsed, setDiscountUsed] = useState(false);
 
   const addToCart = () => {
     const book = books.find(b => b.isbn === selectedIsbn);
+    const price = (!discountUsed && cart.length === 0) ? book.price - 1 : book.price;
+    const total = price * quantity;
+    const item = { ...book, quantity, price, total };
+    setCart([...cart, item]);
+    if (!discountUsed) setDiscountUsed(true);
+  };
+
+  const addCustomBook = () => {
+    if (!customTitle || !customPrice) return;
+    const price = parseFloat(customPrice);
+    const newBook = {
+      isbn: Date.now().toString(),
+      title: customTitle,
+      price
+    };
+    setBooks([...books, newBook]);
+    setSelectedIsbn(newBook.isbn);
+    setCustomTitle("");
+    setCustomPrice("");
+  };
+
+  const addStationeryItem = () => {
+    const price = parseFloat(stationeryPrice);
+    if (price < 0.4 || price > 3) return;
     const item = {
-      ...book,
-      quantity,
-      total: quantity * book.price
+      isbn: Date.now().toString(),
+      title: "Stationery Item",
+      price,
+      quantity: 1,
+      total: price
     };
     setCart([...cart, item]);
+    setStationeryPrice("");
   };
 
   const finalizeSale = () => {
@@ -32,54 +63,82 @@ export default function App() {
     setSales([...sales, { cart, cashReceived, change, timestamp }]);
     setCart([]);
     setCashReceived(0);
+    setDiscountUsed(false);
   };
 
+  const exportCSV = () => {
+    const rows = ["Title,Quantity,Price,Total,Cash Received,Change,Timestamp"];
+    sales.forEach(sale => {
+      sale.cart.forEach(item => {
+        rows.push(`"${item.title}",${item.quantity},${item.price.toFixed(2)},${item.total.toFixed(2)},${sale.cashReceived.toFixed(2)},${sale.change.toFixed(2)},${sale.timestamp}`);
+      });
+    });
+    const blob = new Blob([rows.join("\n")], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "sales.csv";
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const totalRevenue = sales.reduce((sum, s) => sum + s.cart.reduce((t, i) => t + i.total, 0), 0);
+  const totalCashToday = sales
+    .filter(s => new Date(s.timestamp).toDateString() === new Date().toDateString())
+    .reduce((sum, s) => sum + s.cashReceived, 0);
+  const totalChangeToday = sales
+    .filter(s => new Date(s.timestamp).toDateString() === new Date().toDateString())
+    .reduce((sum, s) => sum + s.change, 0);
+
   return (
-    <div style={{ padding: 20, fontFamily: 'sans-serif' }}>
+    <div style={{ padding: 20, fontFamily: "Arial" }}>
       <h1>Book Sales Tracker</h1>
 
-      <h2>Add to Cart</h2>
-      <select onChange={(e) => setSelectedIsbn(e.target.value)} value={selectedIsbn}>
+      <h2>Add a Book</h2>
+      <select value={selectedIsbn} onChange={e => setSelectedIsbn(e.target.value)}>
         {books.map(book => (
           <option key={book.isbn} value={book.isbn}>
             {book.title} - £{book.price.toFixed(2)}
           </option>
         ))}
       </select>
-      <input
-        type="number"
-        min="1"
-        value={quantity}
-        onChange={(e) => setQuantity(Number(e.target.value))}
-      />
-      <button onClick={addToCart}>Add</button>
+      <input type="number" min="1" value={quantity} onChange={e => setQuantity(Number(e.target.value))} />
+      <button onClick={addToCart}>Add to Cart</button>
+
+      <h3>Add Custom Book</h3>
+      <input placeholder="Title" value={customTitle} onChange={e => setCustomTitle(e.target.value)} />
+      <input placeholder="Price" type="number" value={customPrice} onChange={e => setCustomPrice(e.target.value)} />
+      <button onClick={addCustomBook}>Add Custom</button>
+
+      <h3>Add Stationery Item</h3>
+      <input placeholder="£0.40 - £3.00" type="number" value={stationeryPrice} onChange={e => setStationeryPrice(e.target.value)} />
+      <button onClick={addStationeryItem}>Add Stationery</button>
 
       <h2>Cart</h2>
       <ul>
-        {cart.map((item, index) => (
-          <li key={index}>
-            {item.title} x{item.quantity} = £{item.total.toFixed(2)}
-          </li>
+        {cart.map((item, i) => (
+          <li key={i}>{item.title} x{item.quantity} - £{item.total.toFixed(2)}</li>
         ))}
       </ul>
 
-      <p>Total: £{cart.reduce((sum, item) => sum + item.total, 0).toFixed(2)}</p>
-      <input
-        type="number"
-        value={cashReceived}
-        onChange={(e) => setCashReceived(Number(e.target.value))}
-        placeholder="Cash Received"
-      />
+      <p>Total Due: £{cart.reduce((sum, item) => sum + item.total, 0).toFixed(2)}</p>
+      <input placeholder="Cash Received" type="number" value={cashReceived} onChange={e => setCashReceived(Number(e.target.value))} />
       <button onClick={finalizeSale}>Finalize Sale</button>
 
-      <h2>Sales</h2>
+      <h2>Sales Log</h2>
       <ul>
-        {sales.map((sale, i) => (
+        {sales.map((s, i) => (
           <li key={i}>
-            {sale.cart.length} items | Cash: £{sale.cashReceived.toFixed(2)} | Change: £{sale.change.toFixed(2)}
+            {new Date(s.timestamp).toLocaleTimeString()} | Cash: £{s.cashReceived.toFixed(2)} | Change: £{s.change.toFixed(2)}
           </li>
         ))}
       </ul>
+      <button onClick={exportCSV}>Export CSV</button>
+
+      <h2>Summary</h2>
+      <p>Total Revenue: £{totalRevenue.toFixed(2)}</p>
+      <p>Cash Taken Today: £{totalCashToday.toFixed(2)}</p>
+      <p>Change Given Today: £{totalChangeToday.toFixed(2)}</p>
     </div>
   );
 }
