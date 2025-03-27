@@ -80,6 +80,10 @@ export default function App() {
     setCart([]);
     setCashReceived('');
     setDiscountUsed(false);
+    setQuantity(1);
+    setCustomTitle('');
+    setCustomPrice('');
+    setStationeryPrice('');
   };
 
   const exportCSV = () => {
