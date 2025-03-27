@@ -113,7 +113,7 @@ export default function App() {
   const [customTitle, setCustomTitle] = useState("");
   const [customPrice, setCustomPrice] = useState("");
   const [stationeryPrice, setStationeryPrice] = useState("");
-  const [cashReceived, setCashReceived] = useState(0);
+  const [cashReceived, setCashReceived] = useState('');
   const [discountUsed, setDiscountUsed] = useState(false);
 
   const addToCart = () => {
@@ -128,13 +128,15 @@ export default function App() {
   const addCustomBook = () => {
     if (!customTitle || !customPrice) return;
     const price = parseFloat(customPrice);
-    const newBook = {
+    const total = price * 1;
+    const item = {
       isbn: Date.now().toString(),
       title: customTitle,
-      price
+      price,
+      quantity: 1,
+      total
     };
-    setBooks([...books, newBook]);
-    setSelectedIsbn(newBook.isbn);
+    setCart([...cart, item]);
     setCustomTitle("");
     setCustomPrice("");
   };
@@ -155,7 +157,7 @@ export default function App() {
 
   const finalizeSale = () => {
     const total = cart.reduce((sum, item) => sum + item.total, 0);
-    const change = cashReceived - total;
+    const change = parseFloat(cashReceived || 0) - total;
     const timestamp = new Date().toISOString();
     setSales([...sales, { cart, cashReceived, change, timestamp }]);
     setCart([]);
@@ -219,7 +221,8 @@ export default function App() {
       </ul>
 
       <p>Total Due: £{cart.reduce((sum, item) => sum + item.total, 0).toFixed(2)}</p>
-      <input placeholder="Cash Received" type="number" value={cashReceived} onChange={e => setCashReceived(Number(e.target.value))} />
+      <input placeholder="Cash Received" type="number" value={cashReceived}
+onChange={e => setCashReceived(e.target.value)} onChange={e => setCashReceived(Number(e.target.value))} />
       <button onClick={finalizeSale}>Finalize Sale</button>
 
       <h2>Sales Log</h2>
