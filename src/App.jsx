@@ -4,8 +4,12 @@ import { useState, useEffect } from "react";
 const initialBooks = [
   { isbn: "9780755500413", title: "All New Minecraft Creative Handbook", price: 9.99 },
   { isbn: "9781546152293", title: "Astro Turf Journal", price: 8.99 },
+  { isbn: "9781338680072", title: "Ballad of Songbird and Snakes Journal, The", price: 4.99 },
+  { isbn: "9780702309519", title: "Ballad of Songbirds and Snakes, The", price: 8.99 },
+  { isbn: "9780702334740", title: "Beastly Beauty", price: 8.99 },
   { isbn: "HANDPOINTERS", title: "Hand Pointers", price: 3.99 }
 ];
+
 
 export default function App() {
   const [books] = useState(initialBooks);
@@ -18,6 +22,7 @@ export default function App() {
   const [stationeryPrice, setStationeryPrice] = useState("");
   const [cashReceived, setCashReceived] = useState('');
   const [discountUsed, setDiscountUsed] = useState(false);
+  const [saleComplete, setSaleComplete] = useState(false);
   const [selectedDate, setSelectedDate] = useState('');
   const handleDateChange = (e) => setSelectedDate(e.target.value);
   const clearSales = () => {
@@ -80,6 +85,8 @@ export default function App() {
     setCart([]);
     setCashReceived('');
     setDiscountUsed(false);
+    setSaleComplete(true);
+    setTimeout(() => setSaleComplete(false), 3000);
     setQuantity(1);
     setCustomTitle('');
     setCustomPrice('');
