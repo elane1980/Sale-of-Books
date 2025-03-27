@@ -116,6 +116,8 @@ export default function App() {
   const [stationeryPrice, setStationeryPrice] = useState("");
   const [cashReceived, setCashReceived] = useState('');
   const [discountUsed, setDiscountUsed] = useState(false);
+  
+  const [latestSaleIndex, setLatestSaleIndex] = useState(null);
   const [saleComplete, setSaleComplete] = useState(false);
   const [selectedDate, setSelectedDate] = useState('');
   const handleDateChange = (e) => setSelectedDate(e.target.value);
@@ -175,6 +177,7 @@ export default function App() {
     const timestamp = new Date().toISOString();
     const updatedSales = [...sales, { cart, cashReceived, change, timestamp }];
     setSales(updatedSales);
+    setLatestSaleIndex(updatedSales.length - 1);
     localStorage.setItem('sales', JSON.stringify(updatedSales));
     setCart([]);
     setCashReceived('');
@@ -238,7 +241,7 @@ export default function App() {
       <h2>Cart</h2>
       <ul>
         {cart.map((item, i) => (
-          <li key={i}>{item.title} x{item.quantity} - £{item.total.toFixed(2)}</li>
+          <li key={i} style={i === latestSaleIndex ? { border: '2px solid green', padding: '4px', fontWeight: 'bold' } : {}}>{item.title} x{item.quantity} - £{item.total.toFixed(2)}</li>
         ))}
       </ul>
 
@@ -250,9 +253,9 @@ export default function App() {
       <input type='date' value={selectedDate} onChange={handleDateChange} />
       <button onClick={clearSales}>Clear All Sales Data</button>
       <ul>
-        {sales.filter(s => !selectedDate || new Date(s.timestamp).toISOString().slice(0,10) === selectedDate)
+        {sales.filter((s, i) => !selectedDate || new Date(s.timestamp).toISOString().slice(0,10) === selectedDate)
         .map((s, i) => (
-          <li key={i}>
+          <li key={i} style={i === latestSaleIndex ? { border: '2px solid green', padding: '4px', fontWeight: 'bold' } : {}}>
             {new Date(s.timestamp).toLocaleTimeString()} | Cash: £{parseFloat(s.cashReceived).toFixed(2)} | Change: £{s.change.toFixed(2)}
           </li>
         ))}
