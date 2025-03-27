@@ -163,6 +163,7 @@ export default function App() {
     setCart([]);
     setCashReceived(0);
     setDiscountUsed(false);
+    setDiscountUsed(false);
   };
 
   const exportCSV = () => {
